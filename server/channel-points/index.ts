@@ -1,4 +1,4 @@
-import { signIn } from '../firebase'
+import { signIn } from '../../shared/firebase'
 import firebase from 'firebase'
 import { config } from '../../shared/firebase'
 import { localCache } from './localCache'

@@ -5,7 +5,7 @@ const app = new Koa()
 const router = new Router()
 import firebase from 'firebase'
 import { config } from '../shared/firebase'
-import { signIn } from './firebase'
+import { signIn } from '../shared/firebase'
 import { localCache } from './channel-points/localCache'
 
 const firebaseApp = firebase.initializeApp(config)

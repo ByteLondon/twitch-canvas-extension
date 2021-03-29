@@ -11,46 +11,48 @@ import {
   zoomLevel,
 } from '../../shared/config'
 import ky from 'ky'
-import { config } from '../../shared/firebase'
+import { config, signIn } from '../../shared/firebase'
 
-const twitch = window.Twitch.ext;
+const twitch = window.Twitch.ext
 
 twitch.rig.log('Hello World')
 
 const requests = {
   set: createRequest('POST', 'cycle'),
-  get: createRequest('GET', 'query')
-};
+  get: createRequest('GET', 'query'),
+}
 
 function createRequest(type, method) {
   return {
     type: type,
     url: location.protocol + '//localhost:8081/color/' + method,
     success: updateBlock,
-    error: logError
+    error: logError,
   }
 }
 
 function logError(_, error, status) {
-  twitch.rig.log('EBS request returned '+status+' ('+error+')');
+  twitch.rig.log('EBS request returned ' + status + ' (' + error + ')')
 }
 
 function updateBlock() {
-  twitch.rig.log('Updating block color');
+  twitch.rig.log('Updating block color')
 }
 
 function setAuth(token) {
   Object.keys(requests).forEach((req) => {
-    twitch.rig.log('Setting auth headers');
-    requests[req].headers = { 'Authorization': 'Bearer ' + token }
-  });
+    twitch.rig.log('Setting auth headers')
+    requests[req].headers = { Authorization: 'Bearer ' + token }
+  })
 }
 
-twitch.onAuthorized(function(auth) {
+twitch.onAuthorized(function (auth) {
   // save our credentials
-  uid = auth.userId;
-  setAuth(auth.token);
-});
+  uid = auth.userId
+  setAuth(auth.token)
+  twitch.rig.log(uid)
+  getRedemptions()
+})
 
 // First off, lets clear that blasted console
 console.clear()
@@ -75,6 +77,9 @@ let coolDownText: HTMLElement = document.getElementById('cooldown-text')
 let zoomInButton: HTMLElement = document.getElementById('zoom-in')
 let zoomOutButton: HTMLElement = document.getElementById('zoom-out')
 let hideButton: HTMLElement = document.getElementById('hide')
+let colorsBlock: HTMLElement = document.getElementById('colors')
+let redemptionsBlock: HTMLElement = document.getElementById('redemptions-count')
+let controlPanel: HTMLElement = document.getElementById('control-panel')
 let colorOptions: HTMLElement[] = []
 
 // set loading state
@@ -84,7 +89,7 @@ body.classList.add('logged-in')
 
 // Define variables
 
-let uid: string
+let uid: string = 'abc123'
 let app: any
 let graphics: any
 let gridLines: any
@@ -101,8 +106,10 @@ let scale: number = 1
 let currentlyWriting: string
 let ready: boolean = false
 
+let redemptionsCount = 0
+
 // Setup Firebase
-firebase.initializeApp(config)
+const firebaseApp = firebase.initializeApp(config)
 
 // Check if user is logged in
 
@@ -129,7 +136,7 @@ function writePixel(x: number, y: number, color: string) {
   // their new pixel to the database
   //TODO: Get UID from Twitch
   const data: Pixel = {
-    uid: 'abc123',
+    uid: uid,
     color: color,
   }
 
@@ -223,6 +230,34 @@ function endCoolDown() {
   body.classList.remove('cooling')
 }
 
+async function getRedemptions() {
+  await signIn(firebaseApp)
+  twitch.rig.log(`Getting redemptions for ${uid}`)
+  firebase
+    .database()
+    .ref(`redemptions/${uid}`)
+    .get()
+    .then((e) => {
+      redemptionsCount = e.val() || 0
+      twitch.rig.log(`${e.val()} redemptions for ${uid}`)
+      redemptionsBlock.innerText = `${redemptionsCount} Pixels`
+      return e
+    })
+    .catch((e) => {
+      console.log(`Error getting redemptions ${e.message}`)
+      twitch.rig.log(`Error getting redemptions ${e.message}`)
+    })
+
+  firebase
+    .database()
+    .ref(`redemptions`)
+    .on('child_changed', (change) => {
+      if (change.key !== uid) return
+      redemptionsCount = change.val() || 0
+      redemptionsBlock.innerText = `${redemptionsCount} Pixels`
+    })
+}
+
 // Draw pixel functions
 
 function startListeners() {
@@ -232,19 +267,6 @@ function startListeners() {
   // in the database
   let placeRef = firebase.database().ref(`pixel`)
 
-  // get once update on all the values
-  // in the grid so we can draw everything
-  // on first load.
-  // placeRef.once('value')
-  // 	.then(snapshot =>
-  // 	{
-  // 		// draw all the pixels in the grid
-  // 		var grid = snapshot.val();
-  // 		for(let i in grid)
-  // 		{
-  // 			renderPixel(i, grid[i]);
-  // 		}
-
   // start listening for changes to pixels
   placeRef.on('child_changed', onChange)
 
@@ -252,10 +274,6 @@ function startListeners() {
   // grid position that have never had a
   // pixel drawn on them are new.
   placeRef.on('child_added', onChange)
-  // })
-  // .catch(error => {
-  // 	console.log(error);
-  // })
 
   ready = true
 }
@@ -275,10 +293,10 @@ function onChange(change) {
 function setupStage() {
   // Setting up canvas with Pixi.js
   app = new PIXI.Application({
-    width: window.innerWidth,
-    height: window.innerHeight - 60,
+    width: 300,
+    height: 300,
     antialias: false,
-    transparent: true
+    transparent: true,
   })
   canvasContainer.appendChild(app.view)
 
@@ -309,8 +327,8 @@ function setupStage() {
 
   // move graphics so that it's center
   // is at x0 y0
-  graphics.position.x = -graphics.width / 2
-  graphics.position.y = -graphics.height / 2
+  graphics.position.x = 0
+  graphics.position.y = 0
 
   // place graphics into the container
   container.addChild(graphics)
@@ -341,14 +359,15 @@ function setupStage() {
 
   // add zoom button controls
   zoomInButton.addEventListener('click', () => {
-    toggleZoom({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, true)
+    toggleZoom({ x: graphics.width / 2, y: graphics.height / 2 }, true)
   })
   zoomOutButton.addEventListener('click', () => {
-    toggleZoom({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, false)
+    toggleZoom({ x: graphics.width / 2, y: graphics.height / 2 }, false)
   })
   hideButton.addEventListener('click', () => {
-    const setTo = canvasContainer.style.display === "none" ? "block" : "none"
+    const setTo = canvasContainer.style.display === 'none' ? 'block' : 'none'
     canvasContainer.style.display = setTo
+    controlPanel.style.display = setTo
   })
 }
 
@@ -413,12 +432,12 @@ function selectColor(color: string) {
 
 function onResize() {
   // resize the canvas to fill the screen
-  app.renderer.resize(window.innerWidth, window.innerHeight)
+  app.renderer.resize(300, 300)
 
   // center the container to the new
   // window size.
-  container.position.x = window.innerWidth / 2
-  container.position.y = window.innerHeight / 2
+  container.position.x = 0
+  container.position.y = 0
 }
 
 function onDown(e) {
@@ -444,8 +463,8 @@ function onMove(e) {
   // check if the user has clicked or touched
   // down and not yet lifted off)
   if (mouseDown) {
-    // if not yet detected a drag then...
-    if (!dragging) {
+    // if not yet detected a drag and we're zoomed then...
+    if (!dragging && zoomed) {
       // we get the mouses current position
       let pos = e.data.global
 
@@ -548,6 +567,14 @@ function toggleZoom(offset: Position, forceZoom?: boolean) {
   // toggle the zoomed varable
   zoomed = forceZoom !== undefined ? forceZoom : !zoomed
 
+  if (zoomed && redemptionsCount > 0) {
+    colorsBlock.style.display = 'block'
+    redemptionsBlock.style.display = 'none'
+  } else {
+    redemptionsBlock.style.display = 'block'
+    colorsBlock.style.display = 'none'
+  }
+
   // scale will equal 4 if zoomed (so 4x bigger),
   // other otherwise the scale will be 1
   scale = zoomed ? zoomLevel : 1
@@ -564,48 +591,12 @@ function toggleZoom(offset: Position, forceZoom?: boolean) {
   // We are scaling the container and not
   // the graphics.
   TweenMax.to(container.scale, 0.5, { x: scale, y: scale, ease: Power3.easeInOut })
-  let x = offset.x - window.innerWidth / 2
-  let y = offset.y - window.innerHeight / 2
-  let newX = zoomed ? graphics.position.x - x : graphics.position.x + x
-  let newY = zoomed ? graphics.position.y - y : graphics.position.y + y
+  let x = offset.x
+  let y = offset.y
+  //Put the top-left corner 25 x zoomLevel pixels from edge
+  let newX = zoomed ? -x + graphics.width / (2 * zoomLevel) : 0
+  let newY = zoomed ? -y + graphics.height / (2 * zoomLevel) : 0
   TweenMax.to(graphics.position, 0.5, { x: newX, y: newY, ease: Power3.easeInOut })
   TweenMax.to(gridLines.position, 0.5, { x: newX, y: newY, ease: Power3.easeInOut })
   TweenMax.to(gridLines, 0.5, { alpha: opacity, ease: Power3.easeInOut })
 }
-
-/*
-
-Firebase database rules are set to...
-
-{
-  "rules": {
-    "last_write": {
-      "$user": {
-        ".read": "auth.uid === $user",
-        ".write": "newData.exists() && auth.uid === $user",
-        ".validate": "newData.isNumber() && newData.val() === now && (!data.exists() || newData.val() > data.val()+10000)"
-      }
-    },
-    "pixel": {
-      ".read": "true",
-      "$square": {
-        	".write": "auth !== null",
-        	".validate": "newData.hasChildren(['uid', 'color', 'timestamp']) && $square.matches(/^([0-9]|[1-9][0-9]|[1-9][0-9][0-9])x([0-9]|[1-9][0-9]|[1-9][0-9][0-9])$/)",
-      		"uid": {
-            ".validate": "newData.val() === auth.uid"
-          },
-          "timestamp": {
-            ".validate": "newData.val() >= now - 500 && newData.val() === data.parent().parent().parent().child('last_write/'+auth.uid).val()"
-          },
-          "color": {
-            ".validate": "newData.isString() && newData.val().length === 6 && newData.val().matches(/^(ffffff|e4e4e4|888888|222222|ffa7d1|e50000|e59500|a06a42|e5d900|94e044|02be01|00d3dd|0083c7|0000ea|cf6ee4|820080)$/)"
-          }
-      }
-    }
-  }
-}
-
-*/
-
-// the rules to prevent adding pixels during cooldown
-// were written with help from http://stackoverflow.com/a/24841859

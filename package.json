@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node ./server/server.ts",
+    "start": "ts-node -r dotenv/config ./server/server.ts",
     "build": "",
     "build:client": "PARCEL_WORKERS=2 parcel build --dist-dir ./public client/video_overlay.html",
     "serve:client": "node ./client/serve.js"

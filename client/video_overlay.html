@@ -8,7 +8,7 @@
   <body>
     <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
     <div id="canvas"></div>
-    <div class="controls">
+    <div class="controls" id="control-panel">
       <ul id="colors">
         <li class="" id="c-ffffff"></li>
         <li class="" id="c-e4e4e4"></li>
@@ -31,11 +31,15 @@
           <span id="cooldown-text">1:00</span>
         </div>
       </ul>
+      <div class="redemptions">
+        <span id="redemptions-count">0 Pixels</span>
+      </div>
     </div>
 
-    <div class="info general">
-      Click to zoom, click and drag to move.<!-- <span>If the screen is blank then I've probably hit my Firebase free tier limits :(</span> -->
-    </div>
+    <!--<div class="info general">
+      Click to zoom, click and drag to move.
+    </div> -->
+    <!-- <span>If the screen is blank then I've probably hit my Firebase free tier limits :(</span> -->
     <div class="info drawing">Click to draw pixel, click and drag to move.</div>
     <div class="info loading">Loading...</div>
 

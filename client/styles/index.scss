@@ -24,12 +24,13 @@ body {
 
 .controls {
   position: absolute;
-  //left: 0;
-  right: 0;
-  bottom: 0;
+  left: 0;
+  //right: 0;
+  top: 300px;
   //height: 40px;
   background-color: #343436;
   padding: 0;
+  width: 300px;
 
   display: flex;
   flex-direction: row;
@@ -70,6 +71,14 @@ body {
   }
 }
 
+.redemptions {
+  color: white;
+  text-align: center;
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 #colors {
   margin: 0;
   padding: 10px;
@@ -77,6 +86,7 @@ body {
   text-align: center;
   transition: transform 0.5s ease-in-out;
   position: relative;
+  display: none;
 
   &:before {
     color: white;
@@ -216,8 +226,8 @@ body {
 
 .zoom-controls {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 50px;
+  left: 10px;
 
   > div {
     background-color: rgba(0, 0, 0, 0.7);
