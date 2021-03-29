@@ -1,5 +1,5 @@
 import firebase from 'firebase'
-import PIXI = require('pixi.js')
+import * as PIXI from 'pixi.js'
 import { TweenMax, Power3 } from 'gsap'
 import {
   clearColorSelectionOnCoolDown,
@@ -9,9 +9,48 @@ import {
   gridSize,
   squareSize,
   zoomLevel,
-} from './config'
+} from '../../shared/config'
 import ky from 'ky'
-import { config } from './firebase'
+import { config } from '../../shared/firebase'
+
+const twitch = window.Twitch.ext;
+
+twitch.rig.log('Hello World')
+
+const requests = {
+  set: createRequest('POST', 'cycle'),
+  get: createRequest('GET', 'query')
+};
+
+function createRequest(type, method) {
+  return {
+    type: type,
+    url: location.protocol + '//localhost:8081/color/' + method,
+    success: updateBlock,
+    error: logError
+  }
+}
+
+function logError(_, error, status) {
+  twitch.rig.log('EBS request returned '+status+' ('+error+')');
+}
+
+function updateBlock() {
+  twitch.rig.log('Updating block color');
+}
+
+function setAuth(token) {
+  Object.keys(requests).forEach((req) => {
+    twitch.rig.log('Setting auth headers');
+    requests[req].headers = { 'Authorization': 'Bearer ' + token }
+  });
+}
+
+twitch.onAuthorized(function(auth) {
+  // save our credentials
+  uid = auth.userId;
+  setAuth(auth.token);
+});
 
 // First off, lets clear that blasted console
 console.clear()
@@ -20,7 +59,6 @@ console.clear()
 
 interface Pixel {
   uid: string
-  timestamp: number
   color: string
 }
 
@@ -32,17 +70,17 @@ interface Position {
 // Get DOM elements
 
 let body: HTMLElement = document.body
-let authButton: HTMLElement = document.getElementById('auth')
-let authButtonText: HTMLElement = document.getElementById('authButtonText')
 let canvasContainer: HTMLElement = document.getElementById('canvas')
 let coolDownText: HTMLElement = document.getElementById('cooldown-text')
 let zoomInButton: HTMLElement = document.getElementById('zoom-in')
 let zoomOutButton: HTMLElement = document.getElementById('zoom-out')
+let hideButton: HTMLElement = document.getElementById('hide')
 let colorOptions: HTMLElement[] = []
 
 // set loading state
 
 body.classList.add('loading')
+body.classList.add('logged-in')
 
 // Define variables
 
@@ -63,136 +101,71 @@ let scale: number = 1
 let currentlyWriting: string
 let ready: boolean = false
 
-// I'm adding 5 seconds before I begin downloading
-// all the pixels, but only if the pen is running
-// as a thumbnail preview.
-// That way I'm hopefully not using up valuable
-// bandwidth on my Firebase account.
-let initWait = location.pathname.match(/fullcpgrid/i) ? 5000 : 0
-
 // Setup Firebase
-
 firebase.initializeApp(config)
 
 // Check if user is logged in
-
-firebase.auth().onAuthStateChanged(function (user) {
-  if (user) {
-    // user is logged in
-    uid = user.uid
-
-    // set logout button
-    authButtonText.innerHTML = 'Logout'
-
-    body.classList.add('logged-in')
-    body.classList.remove('logged-out')
-  } else {
-    // user is not logged in
-    uid = null
-
-    // set login button
-    authButtonText.innerHTML = 'Login with Twitter'
-
-    body.classList.remove('logged-in')
-    body.classList.add('logged-out')
-  }
-
-  authButton.addEventListener('click', toggleLogin)
-})
 
 // run stage setup
 setupStage()
 setupColorOptions()
 
 // start listening for new pixels
-setTimeout(startListeners, initWait)
-
-// Auth functions
-
-function login() {
-  // Open Twitter auth window
-  return firebase
-    .auth()
-    .signInAnonymously()
-    .catch((error) => console.log('error logging in', error))
-}
-
-function logout() {
-  firebase
-    .auth()
-    .signOut()
-    .catch((error) => console.error('error logging out', error))
-}
-
-function toggleLogin() {
-  if (uid) logout()
-  else login()
-}
+startListeners()
 
 // Write pixel to database functions
 
 function writePixel(x: number, y: number, color: string) {
-  if (uid) {
-    console.log(`writing ${color} pixel...`)
+  console.log(`writing ${color} pixel...`)
 
-    // First we need to get a valid timestamp.
-    // To stop spamming the rules on the database
-    // prevent creating a new timestamp within a
-    // set period.
+  // First we need to get a valid timestamp.
+  // To stop spamming the rules on the database
+  // prevent creating a new timestamp within a
+  // set period.
 
-    getTimestamp()
-      .then((timestamp) => {
-        // we've successfully set a new timestamp.
-        // This means the cooldown period is
-        // over and the user is free to save
-        // their new pixel to the database
-
-        const data: Pixel = {
-          uid: uid,
-          timestamp: timestamp,
-          color: color,
-        }
-
-        currentlyWriting = x + 'x' + y
-
-        // We set the new pixel data with the key 'XxY'
-        // for example "56x93"
-        firebase
-          .database()
-          .ref(`pixel/${currentPlace}-` + currentlyWriting)
-          .set(data)
-          .then(() => {
-            // Pixel successfully saved, we'll wait for
-            // the pixel listeners to pick up the new
-            // pixel before drawing it on the canvas.
-            currentlyWriting = null
-            startCoolDown()
-
-            console.log('success!')
-          })
-          .catch(() => {
-            // Error here is probably due to the internet
-            // connection going down between generating
-            // the timestamp and saving the pixel.
-            // The database has a rule set to check the
-            // timestamp generated and the timestamp
-            // sent with the pixel.
-
-            // It could also be due to usage limits on
-            // the free tier of Firebase.
-
-            console.error('could not write pixel')
-          })
-      })
-      .catch(() => {
-        // Failed to create a new timestamp.
-        // Probably because the user hasn't
-        // waited for their cool down period
-        // to finish.
-
-        console.error('you need to wait for cool down period to finish')
-      })
+  // we've successfully set a new timestamp.
+  // This means the cooldown period is
+  // over and the user is free to save
+  // their new pixel to the database
+  //TODO: Get UID from Twitch
+  const data: Pixel = {
+    uid: 'abc123',
+    color: color,
   }
+
+  currentlyWriting = x + 'x' + y
+
+  // We set the new pixel data with the key 'XxY'
+  // for example "56x93"
+  ky.post('/api/setpixel', {
+    json: {
+      data,
+      currentlyWriting,
+      currentPlace,
+    },
+  })
+    .then(() => {
+      // Pixel successfully saved, we'll wait for
+      // the pixel listeners to pick up the new
+      // pixel before drawing it on the canvas.
+      currentlyWriting = null
+      startCoolDown()
+
+      console.log('success!')
+    })
+    .catch(() => {
+      // Error here is probably due to the internet
+      // connection going down between generating
+      // the timestamp and saving the pixel.
+      // The database has a rule set to check the
+      // timestamp generated and the timestamp
+      // sent with the pixel.
+
+      // It could also be due to usage limits on
+      // the free tier of Firebase.
+
+      console.error('could not write pixel')
+    })
 }
 
 function startCoolDown() {
@@ -250,32 +223,6 @@ function endCoolDown() {
   body.classList.remove('cooling')
 }
 
-function getTimestamp(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    // Update user's "last_write" with
-    // new timestamp
-
-    const ref = firebase.database().ref(`last_write/` + uid)
-    ref
-      .set(firebase.database.ServerValue.TIMESTAMP)
-      .then(() => {
-        // Timestamp is saved, but because
-        // the database generates this we
-        // don't know what it is, so we have
-        // to ask for it.
-
-        ref
-          .once('value')
-          .then((timestamp) => {
-            // We have the new timestamp.
-            resolve(timestamp.val())
-          })
-          .catch(reject)
-      })
-      .catch(reject)
-  })
-}
-
 // Draw pixel functions
 
 function startListeners() {
@@ -331,7 +278,7 @@ function setupStage() {
     width: window.innerWidth,
     height: window.innerHeight - 60,
     antialias: false,
-    backgroundColor: 0xeeeeee,
+    transparent: true
   })
   canvasContainer.appendChild(app.view)
 
@@ -346,7 +293,7 @@ function setupStage() {
   // pixels on, well also move this around
   // when the user drags around
   graphics = new PIXI.Graphics()
-  graphics.beginFill(0xffffff, 1)
+  graphics.beginFill(0xfefefe, 1)
   graphics.drawRect(0, 0, gridSize[0] * squareSize[0], gridSize[1] * squareSize[1])
   graphics.interactive = true
 
@@ -398,6 +345,10 @@ function setupStage() {
   })
   zoomOutButton.addEventListener('click', () => {
     toggleZoom({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, false)
+  })
+  hideButton.addEventListener('click', () => {
+    const setTo = canvasContainer.style.display === "none" ? "block" : "none"
+    canvasContainer.style.display = setTo
   })
 }
 
@@ -594,7 +545,6 @@ function renderPixel(pos: string, pixel: Pixel) {
 }
 
 function toggleZoom(offset: Position, forceZoom?: boolean) {
-  console.log(forceZoom)
   // toggle the zoomed varable
   zoomed = forceZoom !== undefined ? forceZoom : !zoomed
 
