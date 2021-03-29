@@ -5,7 +5,6 @@ import {
   clearColorSelectionOnCoolDown,
   colors,
   coolDownTime,
-  currentPlace,
   gridSize,
   squareSize,
   zoomLevel,
@@ -45,6 +44,8 @@ let scale: number = 1
 let pixelLocation: string
 let ready: boolean = false
 
+let currentPlace = ''
+
 let redemptionsCount = 0
 
 const requests = {
@@ -78,6 +79,7 @@ function setAuth(token) {
 
 twitch.onAuthorized(function (auth) {
   // save our credentials
+  currentPlace = auth.channelId
   uid = auth.userId
   setAuth(auth.token)
   body.classList.add('logged-in')
