@@ -1,6 +1,6 @@
 import firebase from 'firebase'
 import * as PIXI from 'pixi.js'
-import { TweenMax, Power3 } from 'gsap'
+import { Power3, TweenMax } from 'gsap'
 import {
   clearColorSelectionOnCoolDown,
   colors,
@@ -12,10 +12,40 @@ import {
 } from '../../shared/config'
 import ky from 'ky'
 import { config, signIn } from '../../shared/firebase'
+import { Pixel, Position } from './types'
 
 const twitch = window.Twitch.ext
 
-twitch.rig.log('Hello World')
+// Get DOM elements
+let body: HTMLElement = document.body
+let canvasContainer: HTMLElement = document.getElementById('canvas')
+let coolDownText: HTMLElement = document.getElementById('cooldown-text')
+let zoomInButton: HTMLElement = document.getElementById('zoom-in')
+let zoomOutButton: HTMLElement = document.getElementById('zoom-out')
+let hideButton: HTMLElement = document.getElementById('hide')
+let colorsBlock: HTMLElement = document.getElementById('colors')
+let redemptionsBlock: HTMLElement = document.getElementById('redemptions-count')
+let controlPanel: HTMLElement = document.getElementById('control-panel')
+let colorOptions: HTMLElement[] = []
+
+let uid: string = 'abc123'
+let app: any
+let graphics: any
+let gridLines: any
+let container: any
+let dragging: boolean = false
+let mouseDown: boolean = false
+let start: Position
+let graphicsStart: Position
+let selectedColor: string
+let zoomed: boolean = false
+let coolCount: number = 0
+let coolInterval: any
+let scale: number = 1
+let pixelLocation: string
+let ready: boolean = false
+
+let redemptionsCount = 0
 
 const requests = {
   set: createRequest('POST', 'cycle'),
@@ -50,63 +80,13 @@ twitch.onAuthorized(function (auth) {
   // save our credentials
   uid = auth.userId
   setAuth(auth.token)
-  twitch.rig.log(uid)
+  body.classList.add('logged-in')
   getRedemptions()
 })
-
-// First off, lets clear that blasted console
-console.clear()
-
-// TypeScript interfaces
-
-interface Pixel {
-  uid: string
-  color: string
-}
-
-interface Position {
-  x: number
-  y: number
-}
-
-// Get DOM elements
-
-let body: HTMLElement = document.body
-let canvasContainer: HTMLElement = document.getElementById('canvas')
-let coolDownText: HTMLElement = document.getElementById('cooldown-text')
-let zoomInButton: HTMLElement = document.getElementById('zoom-in')
-let zoomOutButton: HTMLElement = document.getElementById('zoom-out')
-let hideButton: HTMLElement = document.getElementById('hide')
-let colorsBlock: HTMLElement = document.getElementById('colors')
-let redemptionsBlock: HTMLElement = document.getElementById('redemptions-count')
-let controlPanel: HTMLElement = document.getElementById('control-panel')
-let colorOptions: HTMLElement[] = []
 
 // set loading state
 
 body.classList.add('loading')
-body.classList.add('logged-in')
-
-// Define variables
-
-let uid: string = 'abc123'
-let app: any
-let graphics: any
-let gridLines: any
-let container: any
-let dragging: boolean = false
-let mouseDown: boolean = false
-let start: Position
-let graphicsStart: Position
-let selectedColor: string
-let zoomed: boolean = false
-let coolCount: number = 0
-let coolInterval: any
-let scale: number = 1
-let currentlyWriting: string
-let ready: boolean = false
-
-let redemptionsCount = 0
 
 // Setup Firebase
 const firebaseApp = firebase.initializeApp(config)
@@ -123,31 +103,21 @@ startListeners()
 // Write pixel to database functions
 
 function writePixel(x: number, y: number, color: string) {
-  console.log(`writing ${color} pixel...`)
+  twitch.rig.log(`writing ${color} pixel...`)
 
-  // First we need to get a valid timestamp.
-  // To stop spamming the rules on the database
-  // prevent creating a new timestamp within a
-  // set period.
-
-  // we've successfully set a new timestamp.
-  // This means the cooldown period is
-  // over and the user is free to save
-  // their new pixel to the database
-  //TODO: Get UID from Twitch
   const data: Pixel = {
     uid: uid,
     color: color,
   }
 
-  currentlyWriting = x + 'x' + y
+  pixelLocation = x + 'x' + y
 
   // We set the new pixel data with the key 'XxY'
   // for example "56x93"
   ky.post('/api/setpixel', {
     json: {
       data,
-      currentlyWriting,
+      currentlyWriting: pixelLocation,
       currentPlace,
     },
   })
@@ -155,23 +125,13 @@ function writePixel(x: number, y: number, color: string) {
       // Pixel successfully saved, we'll wait for
       // the pixel listeners to pick up the new
       // pixel before drawing it on the canvas.
-      currentlyWriting = null
+      pixelLocation = null
       startCoolDown()
 
-      console.log('success!')
+      twitch.rig.log('success!')
     })
     .catch(() => {
-      // Error here is probably due to the internet
-      // connection going down between generating
-      // the timestamp and saving the pixel.
-      // The database has a rule set to check the
-      // timestamp generated and the timestamp
-      // sent with the pixel.
-
-      // It could also be due to usage limits on
-      // the free tier of Firebase.
-
-      console.error('could not write pixel')
+      twitch.rig.log('could not write pixel')
     })
 }
 
@@ -184,10 +144,6 @@ function startCoolDown() {
   body.classList.add('cooling')
 
   // start a timeout for the cooldown time
-  // in milliseconds, the milliseconds are
-  // also set in the database rules so removing
-  // this code doesn't allow the user to skip
-  // cooldown
   setTimeout(() => endCoolDown(), coolDownTime)
 
   // coolCount (😎) is used to write the countdown
@@ -244,14 +200,14 @@ async function getRedemptions() {
       return e
     })
     .catch((e) => {
-      console.log(`Error getting redemptions ${e.message}`)
       twitch.rig.log(`Error getting redemptions ${e.message}`)
     })
 
   firebase
     .database()
-    .ref(`redemptions`)
+    .ref(`redemptions/${uid}`)
     .on('child_changed', (change) => {
+      twitch.rig.log(`Update on redemptions: ${change.key} - ${change.val()}`)
       if (change.key !== uid) return
       redemptionsCount = change.val() || 0
       redemptionsBlock.innerText = `${redemptionsCount} Pixels`
@@ -368,6 +324,7 @@ function setupStage() {
     const setTo = canvasContainer.style.display === 'none' ? 'block' : 'none'
     canvasContainer.style.display = setTo
     controlPanel.style.display = setTo
+    hideButton.innerText = setTo === 'block' ? 'x' : '🖌'
   })
 }
 
