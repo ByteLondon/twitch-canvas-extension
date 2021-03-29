@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Twitch Canvas</title>
+    <link rel="stylesheet" type="text/css" href="styles/index.scss" />
+  </head>
+  <body>
+    <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+    <div id="canvas"></div>
+    <div class="controls">
+      <ul id="colors">
+        <li class="" id="c-ffffff"></li>
+        <li class="" id="c-e4e4e4"></li>
+        <li class="" id="c-888888"></li>
+        <li class="" id="c-222222"></li>
+        <li class="" id="c-ffa7d1"></li>
+        <li class="" id="c-e50000"></li>
+        <li class="" id="c-e59500"></li>
+        <li class="" id="c-a06a42"></li>
+        <li class="" id="c-e5d900"></li>
+        <li class="" id="c-94e044"></li>
+        <li class="" id="c-02be01"></li>
+        <li class="" id="c-00d3dd"></li>
+        <li class="" id="c-0083c7"></li>
+        <li class="" id="c-0000ea"></li>
+        <li class="" id="c-cf6ee4"></li>
+        <li class="" id="c-820080"></li>
+
+        <div class="cooldown">
+          <span id="cooldown-text">1:00</span>
+        </div>
+      </ul>
+    </div>
+
+    <div class="info general">
+      Click to zoom, click and drag to move.<!-- <span>If the screen is blank then I've probably hit my Firebase free tier limits :(</span> -->
+    </div>
+    <div class="info drawing">Click to draw pixel, click and drag to move.</div>
+    <div class="info loading">Loading...</div>
+
+    <div class="zoom-controls">
+      <div id="zoom-in">+</div>
+      <div id="zoom-out">-</div>
+      <div id="hide">x</div>
+    </div>
+    <script src="ts/index.ts"></script>
+  </body>
+</html>
