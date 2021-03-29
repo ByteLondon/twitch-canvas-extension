@@ -1,0 +1,97 @@
+{
+  "allowHttpBackend": false,
+  "backendCommand": "npm start",
+  "backendFolderName": "/Users/richardcoates/WebstormProjects/place-extension",
+  "certificateExceptions": [],
+  "extensionViews": [
+    {
+      "channelId": "265737932",
+      "configurationAnchor": "video_overlay",
+      "displayChannelName": "oneesports",
+      "features": {
+        "isBitsEnabled": false,
+        "isChatEnabled": false,
+        "isSubscriptionStatusAvailable": false
+      },
+      "frameSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "id": "1",
+      "isPopout": false,
+      "label": "",
+      "linked": false,
+      "linkedUserId": "",
+      "orientation": "Portrait",
+      "type": "video_overlay",
+      "viewerType": "Broadcaster"
+    }
+  ],
+  "manifest": {
+    "anchor": "video_overlay",
+    "assetUrls": [],
+    "authorName": "Richard Coates and Jean-Marc McGhee",
+    "bitsEnabled": false,
+    "canInstall": true,
+    "configUrl": "https://localhost:1234/config.html",
+    "configurationLocation": "none",
+    "description": "",
+    "eulaTosUrl": "",
+    "hasChatSupport": false,
+    "iconUrl": "",
+    "iconUrls": {},
+    "id": "wby4bd3cpuju4afkeefvg4qn3g40f9",
+    "installationCount": -42,
+    "liveConfigUrl": "",
+    "name": "Place Canvas",
+    "panelHeight": 0,
+    "privacyPolicyUrl": "",
+    "requestIdentityLink": false,
+    "requiredBroadcasterAbilities": [],
+    "screenshotUrls": [],
+    "sku": "",
+    "state": "Testing",
+    "subscriptionsSupportLevel": "none",
+    "summary": "Leave your mark on the stream - literally!",
+    "supportEmail": "",
+    "vendorCode": "",
+    "version": "0.0.1",
+    "viewerSummary": "",
+    "viewerUrl": "",
+    "viewerUrls": {
+      "videoOverlay": "https://localhost:1234/video_overlay.html",
+      "component": "https://localhost:1234/video_component.html"
+    },
+    "views": {
+      "videoOverlay": {
+        "viewerUrl": "https://localhost:1234/video_overlay.html",
+        "canLinkExternalContent": false
+      },
+      "component": {
+        "viewerUrl": "https://localhost:1234/video_component.html",
+        "aspectWidth": 0,
+        "aspectHeight": 0,
+        "aspectRatioX": 300,
+        "aspectRatioY": 200,
+        "scalePixels": 1024,
+        "targetHeight": 4000,
+        "size": 0,
+        "zoom": false,
+        "zoomPixels": 0,
+        "canLinkExternalContent": false,
+        "autoScale": true
+      },
+      "config": {
+        "viewerUrl": "https://localhost:1234/config.html",
+        "canLinkExternalContent": false
+      }
+    },
+    "whitelistedConfigUrls": [],
+    "whitelistedPanelUrls": []
+  },
+  "frontendCommand": "node ./client/serve.js",
+  "frontendFolderName": "/Users/richardcoates/WebstormProjects/place-extension",
+  "name": "Place Canvas",
+  "usingRandomFrontendHostingPort": true,
+  "version": 3
+}
