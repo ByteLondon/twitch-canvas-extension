@@ -33,7 +33,7 @@
     "authorName": "Richard Coates and Jean-Marc McGhee",
     "bitsEnabled": false,
     "canInstall": true,
-    "configUrl": "https://localhost:1234/config.html",
+    "configUrl": "https://wby4bd3cpuju4afkeefvg4qn3g40f9.ext-twitch.tv/wby4bd3cpuju4afkeefvg4qn3g40f9/0.0.1/fa5b4c5d06d54f89773f7ebd44ee91c2/config.html",
     "configurationLocation": "none",
     "description": "",
     "eulaTosUrl": "",
@@ -50,7 +50,7 @@
     "requiredBroadcasterAbilities": [],
     "screenshotUrls": [],
     "sku": "",
-    "state": "Testing",
+    "state": "Assets Uploaded",
     "subscriptionsSupportLevel": "none",
     "summary": "Leave your mark on the stream - literally!",
     "supportEmail": "",
@@ -59,16 +59,16 @@
     "viewerSummary": "",
     "viewerUrl": "",
     "viewerUrls": {
-      "videoOverlay": "https://localhost:1234/video_overlay.html",
-      "component": "https://localhost:1234/video_component.html"
+      "videoOverlay": "https://wby4bd3cpuju4afkeefvg4qn3g40f9.ext-twitch.tv/wby4bd3cpuju4afkeefvg4qn3g40f9/0.0.1/fa5b4c5d06d54f89773f7ebd44ee91c2/video_overlay.html",
+      "component": "https://wby4bd3cpuju4afkeefvg4qn3g40f9.ext-twitch.tv/wby4bd3cpuju4afkeefvg4qn3g40f9/0.0.1/fa5b4c5d06d54f89773f7ebd44ee91c2/video_component.html"
     },
     "views": {
       "videoOverlay": {
-        "viewerUrl": "https://localhost:1234/video_overlay.html",
+        "viewerUrl": "https://wby4bd3cpuju4afkeefvg4qn3g40f9.ext-twitch.tv/wby4bd3cpuju4afkeefvg4qn3g40f9/0.0.1/fa5b4c5d06d54f89773f7ebd44ee91c2/video_overlay.html",
         "canLinkExternalContent": false
       },
       "component": {
-        "viewerUrl": "https://localhost:1234/video_component.html",
+        "viewerUrl": "https://wby4bd3cpuju4afkeefvg4qn3g40f9.ext-twitch.tv/wby4bd3cpuju4afkeefvg4qn3g40f9/0.0.1/fa5b4c5d06d54f89773f7ebd44ee91c2/video_component.html",
         "aspectWidth": 0,
         "aspectHeight": 0,
         "aspectRatioX": 300,
@@ -82,7 +82,7 @@
         "autoScale": true
       },
       "config": {
-        "viewerUrl": "https://localhost:1234/config.html",
+        "viewerUrl": "https://wby4bd3cpuju4afkeefvg4qn3g40f9.ext-twitch.tv/wby4bd3cpuju4afkeefvg4qn3g40f9/0.0.1/fa5b4c5d06d54f89773f7ebd44ee91c2/config.html",
         "canLinkExternalContent": false
       }
     },

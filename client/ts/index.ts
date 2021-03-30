@@ -80,6 +80,8 @@ twitch.onAuthorized(function (auth) {
   currentPlace = auth.channelId
   uid = auth.userId
   setAuth(auth.token)
+  twitch.rig.log(uid)
+  console.log(uid)
   body.classList.add('logged-in')
   getRedemptions()
 })
@@ -88,7 +90,6 @@ twitch.onAuthorized(function (auth) {
 body.classList.add('loading')
 
 const firebaseApp = firebase.initializeApp(config)
-
 
 setupStage()
 setupColorOptions()
@@ -106,7 +107,7 @@ function writePixel(x: number, y: number, color: string) {
 
   pixelLocation = x + 'x' + y
 
-  ky.post('/api/setpixel', {
+  ky.post('https://c8195f134693.ngrok.io/api/setpixel', {
     json: {
       data,
       currentlyWriting: pixelLocation,
@@ -200,7 +201,7 @@ function startListeners() {
 function onChange(change) {
   body.classList.remove('loading')
   const [location, key] = change.key.split('-')
-  if (currentPlace !== location) return
+  if (`a${currentPlace}` !== location) return
   renderPixel(key, change.val())
 }
 
@@ -262,7 +263,8 @@ function setupStage() {
     const setTo = canvasContainer.style.display === 'none' ? 'block' : 'none'
     canvasContainer.style.display = setTo
     controlPanel.style.display = setTo
-    hideButton.innerText = setTo === 'block' ? 'x' : '🖌'
+    zoomInButton.style.display = setTo
+    hideButton.innerText = setTo === 'block' ? '❌' : '🖌'
   })
 }
 
@@ -376,18 +378,25 @@ function renderPixel(pos: string, pixel: Pixel) {
 function toggleZoom(offset: Position, forceZoom?: boolean) {
   zoomed = forceZoom !== undefined ? forceZoom : !zoomed
 
-  if (zoomed && redemptionsCount > 0) {
-    colorsBlock.style.display = 'block'
-    redemptionsBlock.style.display = 'none'
-  } else {
-    redemptionsBlock.style.display = 'block'
-    colorsBlock.style.display = 'none'
-  }
-
   scale = zoomed ? zoomLevel : 1
 
-  if (zoomed) body.classList.add('zoomed')
-  else body.classList.remove('zoomed')
+  if (zoomed){
+    zoomInButton.style.display = 'none'
+    zoomOutButton.style.display = 'block'
+    body.classList.add('zoomed')
+    if(redemptionsCount > 0) {
+      colorsBlock.style.display = 'block'
+      redemptionsBlock.style.display = 'none'
+    } else {
+      redemptionsBlock.style.display = 'block'
+      colorsBlock.style.display = 'none'
+    }
+  }
+  else{
+    zoomInButton.style.display = 'block'
+    zoomOutButton.style.display = 'none'
+    body.classList.remove('zoomed')
+  }
 
   let opacity = zoomed ? 1 : 0
 

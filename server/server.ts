@@ -2,6 +2,7 @@ import * as Koa from 'koa'
 import * as Router from 'koa-router'
 import * as bodyParser from 'koa-bodyparser'
 const app = new Koa()
+import cors = require('@koa/cors')
 const router = new Router()
 import firebase from 'firebase'
 import { config } from '../shared/firebase'
@@ -37,6 +38,7 @@ const getTimestamp = async (uid: string): Promise<any> => {
 }
 
 app.use(bodyParser())
+app.use(cors())
 
 router.post('/api/setpixel', async (ctx: Koa.Context) => {
   const { body } = ctx.request
@@ -75,7 +77,7 @@ router.post('/api/setpixel', async (ctx: Koa.Context) => {
   //If so,
   await firebaseApp
     .database()
-    .ref(`pixel/${body.currentPlace}-` + body.currentlyWriting)
+    .ref(`pixel/a${body.currentPlace}-` + body.currentlyWriting)
     .set(body.data)
     .catch((error) => {
       console.error(error)
